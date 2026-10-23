@@ -78,10 +78,20 @@ const OFFICIAL_INIT_SCRIPT: &str = r#"
         folderLabel.appendChild(folderInput);
         box.appendChild(folderLabel);
 
-        const remoteLine = document.createElement('div');
-        remoteLine.textContent = 'Remote: /my-files';
-        remoteLine.style.cssText = 'color:#888;margin-bottom:8px';
-        box.appendChild(remoteLine);
+        const remoteLabel = document.createElement('label');
+        remoteLabel.textContent = 'Remote folder';
+        remoteLabel.style.cssText = 'display:block;color:#bbb;margin-bottom:4px';
+        const remoteInput = document.createElement('input');
+        remoteInput.type = 'text';
+        remoteInput.spellcheck = false;
+        remoteInput.value = '/my-files/ProtonDrive-Linux';
+        remoteInput.style.cssText = [
+            'box-sizing:border-box', 'width:100%', 'padding:7px 9px',
+            'border-radius:7px', 'border:1px solid #444', 'background:#111',
+            'color:#fff', 'margin-bottom:8px'
+        ].join(';');
+        remoteLabel.appendChild(remoteInput);
+        box.appendChild(remoteLabel);
 
         const buttons = document.createElement('div');
         buttons.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px';
@@ -150,7 +160,7 @@ const OFFICIAL_INIT_SCRIPT: &str = r#"
         makeButton('Start sync', async () => {
             const result = await invoke('engine_start', {
                 localRoot: folderInput.value,
-                remoteRoot: '/my-files'
+                remoteRoot: remoteInput.value
             });
             setStatus(result.running ? 'Sync engine started.' : 'Sync engine did not start.');
             setTimeout(refresh, 1000);

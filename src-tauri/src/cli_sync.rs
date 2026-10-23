@@ -9,7 +9,7 @@ use std::time::Duration;
 use tauri::State;
 
 const ENGINE_SCRIPT: &str = include_str!("../../scripts/proton-sync.py");
-const DEFAULT_REMOTE: &str = "/my-files";
+const DEFAULT_REMOTE: &str = "/my-files/ProtonDrive-Linux";
 const ENGINE_LOG: &str = "sync-engine.log";
 
 #[derive(Debug, Clone, Serialize)]
@@ -156,6 +156,27 @@ fn find_python() -> Option<PathBuf> {
     None
 }
 
+fn ensure_remote_root(cli: &PathBuf, remote: &str) {
+    let trimmed = remote.trim_end_matches('/');
+    if trimmed.is_empty() || trimmed == "/my-files" {
+        return;
+    }
+    let Some((parent, name)) = trimmed.rsplit_once('/') else {
+        return;
+    };
+    if parent != "/my-files" || name.is_empty() {
+        return;
+    }
+    // Best-effort. If the folder exists, the CLI reports an error; if the
+    // session is missing, the engine health later reports needs_login.
+    let _ = Command::new(cli)
+        .args(["fs", "create-folder", parent, name])
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status();
+}
+
 #[tauri::command]
 pub fn engine_default_root(window: tauri::WebviewWindow) -> Result<String, String> {
     ensure_official_command_allowed(&window)?;
@@ -202,6 +223,7 @@ pub fn engine_start(
     if !remote.starts_with('/') {
         return Err("Remote root must be an absolute Proton path".to_string());
     }
+    ensure_remote_root(&cli, &remote);
 
     state.engine.stop_engine()?;
 

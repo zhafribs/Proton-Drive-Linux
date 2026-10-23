@@ -7,6 +7,8 @@ This build produces an AppImage only for the first beta.
 - Linux x86_64
 - Node.js 20 or newer
 - Rust stable (install with rustup)
+- Python 3 (development runtime for the CLI sync engine)
+- official `proton-drive` CLI (`~/.local/bin/proton-drive` or `PROTON_DRIVE_BIN`)
 - WebKitGTK 4.1 development files
 - GTK 3 development files
 - GStreamer base/good plugins

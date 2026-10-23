@@ -31,8 +31,9 @@ data directory.
   bundled web app.
 - **Local state:** separate state directory so the old app's state is not
   reused accidentally.
-- **Scope:** `/my-files` for the first hybrid beta. Computers/devices can be
-  added later if the CLI supports them.
+- **Scope:** one local folder to `/my-files/ProtonDrive-Linux` by default, so
+  the first test does not sync all of My Files. The panel allows a different
+  remote folder.
 - **Panel:** injected into the official page; controls CLI login, engine
   start/stop, sync now, folder selection, and status.
 
@@ -56,6 +57,7 @@ account restriction.
 
 1. Official Proton login works in the Tauri window.
 2. CLI login works and status is detected.
-3. A disposable local folder syncs to `/my-files`.
+3. A disposable local folder syncs to `/my-files/ProtonDrive-Test` or
+   `/my-files/ProtonDrive-Linux`.
 4. Upload, download, delete-to-trash, conflict, restart, and stop/start work.
 5. Only then consider using a real account/folder.

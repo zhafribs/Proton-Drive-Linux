@@ -2,6 +2,12 @@
 
 **Design document — draft for approval**
 
+> **Superseded auth path (2026-10-24):** the bundled-web-app auth design below
+> triggered a Proton account restriction. The current implementation uses the
+> official `drive.proton.me` webview plus the official CLI sync engine. See
+> [OFFICIAL-WEB-SPIKE.md](OFFICIAL-WEB-SPIKE.md). The sync/safety requirements
+> in this document still apply.
+
 - **Status:** Draft, not implemented
 - **Chosen direction:** Continue the architecture of `DonnieDice/protondrive-linux`
 - **License:** AGPL-3.0-or-later
