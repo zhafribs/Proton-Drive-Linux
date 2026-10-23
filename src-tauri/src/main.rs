@@ -11,6 +11,7 @@ use std::sync::Arc;
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 
 mod live_sync;
+mod sync_commands;
 mod sync_db;
 mod sync_fs;
 mod sync_transfer;
@@ -21,9 +22,10 @@ const PROTON_API_BASE: &str = "https://mail.proton.me";
 const ERR_SYNC_NOT_ALLOWED: &str = "Sync operation is not allowed in this context";
 
 // Shared HTTP client with cookie jar
-struct AppState {
+pub(crate) struct AppState {
     client: Client,
     sync_manager: live_sync::LiveSyncManager,
+    pub(crate) sync: sync_commands::SyncState,
 }
 
 #[derive(Debug, Deserialize)]
@@ -276,7 +278,7 @@ async fn proxy_request(
     })
 }
 
-fn ensure_sync_command_allowed(window: &tauri::WebviewWindow) -> Result<(), String> {
+pub(crate) fn ensure_sync_command_allowed(window: &tauri::WebviewWindow) -> Result<(), String> {
     let current_url = window.url().map_err(|e| {
         eprintln!("[Sync] failed to read window URL: {e}");
         ERR_SYNC_NOT_ALLOWED.to_string()
@@ -298,7 +300,7 @@ fn ensure_sync_command_allowed(window: &tauri::WebviewWindow) -> Result<(), Stri
     Ok(())
 }
 
-fn validate_sync_root_path(path: &str) -> Result<PathBuf, String> {
+pub(crate) fn validate_sync_root_path(path: &str) -> Result<PathBuf, String> {
     let canonical = PathBuf::from(path).canonicalize().map_err(|e| {
         eprintln!("[Sync] invalid sync root path '{}': {e}", path);
         "Invalid sync folder".to_string()
@@ -332,13 +334,19 @@ fn main() {
     std::env::set_var("GDK_GL", "disable");
     std::env::set_var("GSK_RENDERER", "cairo");
 
-    // Create shared client with cookie jar
+    // Create shared client with cookie jar and local sync state.
+    let app_data_dir = dirs::data_local_dir()
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join("proton-drive-linux");
+    let sync_state = sync_commands::SyncState::new(app_data_dir)
+        .expect("Failed to initialize sync state");
     let state = Arc::new(AppState {
         client: Client::builder()
             .cookie_store(true) // Enable cookie jar
             .build()
             .expect("Failed to create HTTP client"),
         sync_manager: live_sync::LiveSyncManager::default(),
+        sync: sync_state,
     });
 
     tauri::Builder::default()
@@ -1166,7 +1174,25 @@ fn main() {
             start_sync,
             stop_sync,
             get_sync_status,
-            handle_remote_update
+            handle_remote_update,
+            sync_commands::sync_get_root,
+            sync_commands::sync_set_root,
+            sync_commands::sync_start,
+            sync_commands::sync_stop,
+            sync_commands::sync_get_status,
+            sync_commands::sync_scan_local,
+            sync_commands::sync_load_items,
+            sync_commands::sync_put_item,
+            sync_commands::sync_delete_item,
+            sync_commands::sync_begin_upload,
+            sync_commands::sync_read_upload_chunk,
+            sync_commands::sync_close_upload,
+            sync_commands::sync_begin_download,
+            sync_commands::sync_write_download_chunk,
+            sync_commands::sync_finish_download,
+            sync_commands::sync_abort_download,
+            sync_commands::sync_trash_local,
+            sync_commands::sync_get_device_name
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
