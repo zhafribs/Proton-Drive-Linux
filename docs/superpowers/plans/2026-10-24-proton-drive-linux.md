@@ -638,7 +638,7 @@ export function conflictName(path: string, now: Date): string;
 - Use a separate Proton test account. Never use the primary account for login or sync testing.
 - Use an isolated test device `ProtonDrive-Test-<date>` and `/tmp/protondrive-test`; no real files.
 - If Proton limits an account, stop retrying and follow `docs/ACCOUNT-SAFETY.md`.
-- Do not point the sync root at `$HOME`, `~/Documents`, `~/Downloads`, or the existing `~/ProtonDrive` without explicit permission.
+- Do not point the sync root at `$HOME`, `~/Documents`, `~/Downloads`, or the existing `~/ProtonDrive` without explicit permission. The beta default is `~/ProtonDrive-Linux`.
 - Every remote delete must be `trashNodes`, never `deleteNodes`.
 - Every local delete must go to trash.
 - Commit after each green test.

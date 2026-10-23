@@ -107,7 +107,7 @@ No AGPL code from the new app will be copied into the MIT app. MIT code from the
      client; do not use a primary account for beta testing
    - credentials are entered into Proton's web login, not stored by this app
    - sync runs while the app is running
-4. User chooses a local folder (default `~/ProtonDrive`).
+4. User chooses a local folder (default `~/ProtonDrive-Linux`, kept separate from the old CLI app's `~/ProtonDrive`).
 5. Sync starts. A Linux device is created or reused under Proton Drive's **Computers** section.
 
 ### Normal use

@@ -74,12 +74,6 @@ export const DriveLinuxPanel = () => {
         ]);
         setRoot(syncRoot ?? undefined);
         setStatus(syncStatus);
-        if (syncRoot?.localPath && !folder) {
-            setFolder(syncRoot.localPath);
-        }
-        if (syncRoot?.deviceName) {
-            setDeviceName(syncRoot.deviceName);
-        }
     };
 
     useEffect(() => {
@@ -97,12 +91,13 @@ export const DriveLinuxPanel = () => {
 
         void (async () => {
             try {
-                const [defaultFolder, name] = await Promise.all([
+                const [defaultFolder, name, existingRoot] = await Promise.all([
                     invoke<string>('sync_default_root'),
                     invoke<string>('sync_get_device_name'),
+                    invoke<RootRecord | null>('sync_get_root'),
                 ]);
-                setFolder(defaultFolder);
-                setDeviceName(name);
+                setFolder(existingRoot?.localPath || defaultFolder);
+                setDeviceName(existingRoot?.deviceName || name);
                 await refresh();
             } catch (err) {
                 setError(err instanceof Error ? err.message : String(err));

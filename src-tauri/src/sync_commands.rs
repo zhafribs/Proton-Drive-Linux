@@ -133,7 +133,7 @@ pub fn sync_get_root(
 pub fn sync_default_root(window: tauri::WebviewWindow) -> Result<String, String> {
     require_allowed(&window)?;
     let home = dirs::home_dir().ok_or("Unable to locate home directory")?;
-    Ok(home.join("ProtonDrive").to_string_lossy().to_string())
+    Ok(home.join("ProtonDrive-Linux").to_string_lossy().to_string())
 }
 
 #[tauri::command]
