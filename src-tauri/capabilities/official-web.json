@@ -18,6 +18,7 @@
   },
   "permissions": [
     "core:default",
-    "allow-cli-probe"
+    "allow-cli-probe",
+    "allow-official-panel"
   ]
 }

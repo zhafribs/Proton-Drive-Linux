@@ -17,6 +17,11 @@ Verified locally with:
 - `PROTON_DRIVE_BIN=/path/to/proton-drive`
 - official CLI `cli-drive@0.9.0`
 
+The panel now also exposes CLI login, engine start/stop, sync-now, folder
+selection, and health status. The engine is the mature CLI-backed engine from
+`Proton-Drive-Linux-Cli`; it is embedded in the binary and runs from the app
+data directory.
+
 ## Architecture
 
 - **Login/UI:** official `drive.proton.me` web app loaded in a Tauri webview.

@@ -14,3 +14,7 @@ version 3 or later. See LICENSE.
 
 Proton Drive is a trademark of Proton AG. This project is independent and
 is not affiliated with, endorsed by, or connected to Proton AG.
+
+The CLI-backed sync engine in scripts/proton-sync.py is reused from
+Proton-Drive-Linux-Cli (MIT), Copyright (C) zhafrisbs and contributors:
+https://github.com/zhafribs/Proton-Drive-Linux-Cli

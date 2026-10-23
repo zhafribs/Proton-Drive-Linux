@@ -10,6 +10,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 
+mod cli_sync;
 mod live_sync;
 mod sync_commands;
 mod sync_db;
@@ -23,55 +24,159 @@ const ERR_SYNC_NOT_ALLOWED: &str = "Sync operation is not allowed in this contex
 
 const OFFICIAL_INIT_SCRIPT: &str = r#"
 (() => {
-    const log = (message) => {
-        try {
-            if (window.__TAURI__ && window.__TAURI__.core) {
-                void window.__TAURI__.core.invoke('js_log', { msg: `[OfficialWeb] ${message}` });
-            }
-        } catch (error) {
-            console.log('[OfficialWeb]', message, error);
+    const invoke = (command, args) => {
+        if (!window.__TAURI__ || !window.__TAURI__.core) {
+            return Promise.reject(new Error('Tauri IPC is unavailable on this page'));
         }
+        return window.__TAURI__.core.invoke(command, args);
+    };
+    const log = (message) => {
+        void invoke('js_log', { msg: `[OfficialWeb] ${message}` }).catch(() => undefined);
     };
 
     const install = () => {
-        if (document.getElementById('pd-linux-cli-probe')) {
+        if (document.getElementById('pd-linux-sync-panel')) {
             return;
         }
+
         const box = document.createElement('div');
-        box.id = 'pd-linux-cli-probe';
+        box.id = 'pd-linux-sync-panel';
         box.style.cssText = [
             'position:fixed', 'right:16px', 'bottom:16px', 'z-index:2147483647',
-            'background:#1b1b1f', 'color:#f5f5f7', 'padding:10px 12px',
-            'border-radius:10px', 'font:12px/1.4 system-ui,sans-serif',
-            'box-shadow:0 8px 30px rgba(0,0,0,.45)', 'max-width:360px'
+            'width:360px', 'max-width:calc(100vw - 32px)',
+            'background:#1b1b1f', 'color:#f5f5f7', 'padding:14px',
+            'border-radius:12px', 'font:12px/1.45 system-ui,sans-serif',
+            'box-shadow:0 10px 35px rgba(0,0,0,.5)'
         ].join(';');
+
         const title = document.createElement('div');
-        title.textContent = 'Linux Sync · CLI probe';
-        title.style.cssText = 'font-weight:700;margin-bottom:6px';
-        const result = document.createElement('div');
-        result.textContent = 'Checking official Proton Drive CLI…';
-        result.style.cssText = 'color:#bbb;overflow-wrap:anywhere';
+        title.textContent = 'Linux Sync';
+        title.style.cssText = 'font-weight:700;font-size:14px;margin-bottom:6px';
         box.appendChild(title);
-        box.appendChild(result);
-        document.body.appendChild(box);
+
+        const warning = document.createElement('div');
+        warning.textContent = 'Official Proton login. Sync uses the official Proton Drive CLI.';
+        warning.style.cssText = 'color:#f0b95b;margin-bottom:8px';
+        box.appendChild(warning);
+
+        const cliLine = document.createElement('div');
+        cliLine.style.cssText = 'color:#aaa;margin-bottom:8px;overflow-wrap:anywhere';
+        cliLine.textContent = 'CLI: checking…';
+        box.appendChild(cliLine);
+
+        const folderLabel = document.createElement('label');
+        folderLabel.textContent = 'Local folder';
+        folderLabel.style.cssText = 'display:block;color:#bbb;margin-bottom:4px';
+        const folderInput = document.createElement('input');
+        folderInput.type = 'text';
+        folderInput.spellcheck = false;
+        folderInput.style.cssText = [
+            'box-sizing:border-box', 'width:100%', 'padding:7px 9px',
+            'border-radius:7px', 'border:1px solid #444', 'background:#111',
+            'color:#fff', 'margin-bottom:8px'
+        ].join(';');
+        folderLabel.appendChild(folderInput);
+        box.appendChild(folderLabel);
+
+        const remoteLine = document.createElement('div');
+        remoteLine.textContent = 'Remote: /my-files';
+        remoteLine.style.cssText = 'color:#888;margin-bottom:8px';
+        box.appendChild(remoteLine);
+
+        const buttons = document.createElement('div');
+        buttons.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px';
+        const makeButton = (label, handler) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = label;
+            button.style.cssText = 'padding:6px 9px;border-radius:6px;cursor:pointer';
+            button.addEventListener('click', () => {
+                button.disabled = true;
+                Promise.resolve()
+                    .then(handler)
+                    .catch((error) => setStatus(`Error: ${error}`))
+                    .finally(() => { button.disabled = false; });
+            });
+            buttons.appendChild(button);
+            return button;
+        };
+
+        const status = document.createElement('div');
+        status.style.cssText = 'color:#bbb;overflow-wrap:anywhere;white-space:pre-wrap';
+        status.textContent = 'Loading…';
+
+        const setStatus = (text) => { status.textContent = text; };
+
+        const refresh = async () => {
+            try {
+                const result = await invoke('engine_status');
+                const health = result.health || {};
+                const state = health.status || (result.running ? 'running' : 'stopped');
+                const bits = [`engine: ${state}`];
+                if (typeof health.local_entries === 'number') {
+                    bits.push(`local: ${health.local_entries}`);
+                }
+                if (typeof health.remote_entries === 'number') {
+                    bits.push(`remote: ${health.remote_entries}`);
+                }
+                if (health.error) {
+                    bits.push(`error: ${health.error}`);
+                }
+                if (health.ts) {
+                    bits.push(`updated: ${health.ts}`);
+                }
+                setStatus(bits.join('\n'));
+            } catch (error) {
+                setStatus(`Status unavailable: ${error}`);
+            }
+        };
 
         const probe = async () => {
             try {
-                if (!window.__TAURI__ || !window.__TAURI__.core) {
-                    throw new Error('Tauri IPC is unavailable on this page');
-                }
-                const value = await window.__TAURI__.core.invoke('cli_probe');
-                result.textContent = `${value.version}\n${value.path}`;
-                result.style.whiteSpace = 'pre-wrap';
+                const value = await invoke('cli_probe');
+                cliLine.textContent = `CLI: ${value.version}\n${value.path}`;
                 log(`CLI probe ok: ${value.version}`);
             } catch (error) {
-                result.textContent = `CLI probe failed: ${error}`;
+                cliLine.textContent = `CLI not available: ${error}`;
                 log(`CLI probe failed: ${error}`);
             }
         };
 
-        setTimeout(probe, 2500);
-        setInterval(probe, 30000);
+        makeButton('CLI login', async () => {
+            await invoke('cli_login');
+            setStatus('CLI login opened in your browser. Complete it, then start sync.');
+            setTimeout(() => { void refresh(); void probe(); }, 2500);
+        });
+        makeButton('Start sync', async () => {
+            const result = await invoke('engine_start', {
+                localRoot: folderInput.value,
+                remoteRoot: '/my-files'
+            });
+            setStatus(result.running ? 'Sync engine started.' : 'Sync engine did not start.');
+            setTimeout(refresh, 1000);
+        });
+        makeButton('Stop', async () => {
+            await invoke('engine_stop');
+            setStatus('Sync engine stopped.');
+            setTimeout(refresh, 500);
+        });
+        makeButton('Sync now', async () => {
+            await invoke('engine_sync_now');
+            setStatus('Manual sync requested.');
+            setTimeout(refresh, 1500);
+        });
+
+        box.appendChild(buttons);
+        box.appendChild(status);
+        document.body.appendChild(box);
+
+        void invoke('engine_default_root')
+            .then((value) => { if (!folderInput.value) folderInput.value = value; })
+            .catch(() => undefined);
+        void probe();
+        void refresh();
+        setInterval(() => { void refresh(); }, 5000);
+        setInterval(() => { void probe(); }, 30000);
     };
 
     if (document.readyState === 'loading') {
@@ -87,6 +192,7 @@ pub(crate) struct AppState {
     client: Client,
     sync_manager: live_sync::LiveSyncManager,
     pub(crate) sync: sync_commands::SyncState,
+    pub(crate) engine: cli_sync::EngineState,
 }
 
 #[derive(Debug, Deserialize)]
@@ -136,7 +242,7 @@ fn cli_probe(window: tauri::WebviewWindow) -> Result<CliProbe, String> {
     })
 }
 
-fn find_cli_binary() -> Option<PathBuf> {
+pub(crate) fn find_cli_binary() -> Option<PathBuf> {
     if let Ok(value) = std::env::var("PROTON_DRIVE_BIN") {
         let path = PathBuf::from(value);
         if path.is_file() {
@@ -166,7 +272,7 @@ fn find_cli_binary() -> Option<PathBuf> {
     None
 }
 
-fn ensure_official_command_allowed(window: &tauri::WebviewWindow) -> Result<(), String> {
+pub(crate) fn ensure_official_command_allowed(window: &tauri::WebviewWindow) -> Result<(), String> {
     let current_url = window.url().map_err(|e| format!("read window URL: {e}"))?;
     let host = current_url.host_str().unwrap_or_default();
     let local = current_url.scheme() == "tauri"
@@ -469,6 +575,8 @@ fn main() {
     let app_data_dir = dirs::data_local_dir()
         .unwrap_or_else(|| PathBuf::from("."))
         .join("proton-drive-linux");
+    let engine_state = cli_sync::EngineState::new(app_data_dir.clone())
+        .expect("Failed to initialize CLI sync engine");
     let sync_state = sync_commands::SyncState::new(app_data_dir)
         .expect("Failed to initialize sync state");
     let state = Arc::new(AppState {
@@ -478,6 +586,7 @@ fn main() {
             .expect("Failed to create HTTP client"),
         sync_manager: live_sync::LiveSyncManager::default(),
         sync: sync_state,
+        engine: engine_state,
     });
 
     tauri::Builder::default()
@@ -1089,7 +1198,7 @@ fn main() {
 
             let official_web = std::env::var("PROTON_DRIVE_OFFICIAL_WEB")
                 .map(|value| value == "1" || value.eq_ignore_ascii_case("true"))
-                .unwrap_or(false);
+                .unwrap_or(true);
             let official_web_nav = official_web;
             let initial_url = if official_web {
                 WebviewUrl::External(
@@ -1326,6 +1435,13 @@ fn main() {
             proxy_request,
             js_log,
             cli_probe,
+            cli_sync::cli_login,
+            cli_sync::engine_default_root,
+            cli_sync::engine_start,
+            cli_sync::engine_stop,
+            cli_sync::engine_sync_now,
+            cli_sync::engine_status,
+            cli_sync::engine_open_log,
             navigate_to_captcha,
             get_captcha_return_url,
             store_verification_token,

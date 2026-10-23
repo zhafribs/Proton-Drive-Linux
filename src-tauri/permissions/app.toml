@@ -43,3 +43,18 @@ commands.allow = [
   "sync_mark_suppressed",
   "sync_get_device_name"
 ]
+
+[[permission]]
+identifier = "allow-official-panel"
+description = "Allows the injected official-web panel to control CLI login and the sync engine."
+commands.allow = [
+  "js_log",
+  "cli_probe",
+  "cli_login",
+  "engine_default_root",
+  "engine_start",
+  "engine_stop",
+  "engine_sync_now",
+  "engine_status",
+  "engine_open_log"
+]
