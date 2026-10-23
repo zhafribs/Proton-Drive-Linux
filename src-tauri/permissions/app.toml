@@ -1,0 +1,45 @@
+[[permission]]
+identifier = "allow-cli-probe"
+description = "Allows the official-web panel to probe the installed Proton Drive CLI."
+commands.allow = ["cli_probe"]
+
+[[permission]]
+identifier = "allow-app-commands"
+description = "Allows the local bundled UI to use the application's own commands."
+commands.allow = [
+  "proxy_request",
+  "js_log",
+  "cli_probe",
+  "navigate_to_captcha",
+  "get_captcha_return_url",
+  "store_verification_token",
+  "get_and_clear_verification_token",
+  "store_login_credentials",
+  "get_and_clear_login_credentials",
+  "save_download",
+  "start_sync",
+  "stop_sync",
+  "get_sync_status",
+  "handle_remote_update",
+  "sync_get_root",
+  "sync_default_root",
+  "sync_set_root",
+  "sync_start",
+  "sync_stop",
+  "sync_get_status",
+  "sync_scan_local",
+  "sync_load_items",
+  "sync_put_item",
+  "sync_delete_item",
+  "sync_begin_upload",
+  "sync_read_upload_chunk",
+  "sync_close_upload",
+  "sync_begin_download",
+  "sync_write_download_chunk",
+  "sync_finish_download",
+  "sync_abort_download",
+  "sync_mkdir_local",
+  "sync_trash_local",
+  "sync_mark_suppressed",
+  "sync_get_device_name"
+]

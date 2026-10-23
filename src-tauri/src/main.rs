@@ -21,6 +21,67 @@ mod sync_watcher;
 const PROTON_API_BASE: &str = "https://mail.proton.me";
 const ERR_SYNC_NOT_ALLOWED: &str = "Sync operation is not allowed in this context";
 
+const OFFICIAL_INIT_SCRIPT: &str = r#"
+(() => {
+    const log = (message) => {
+        try {
+            if (window.__TAURI__ && window.__TAURI__.core) {
+                void window.__TAURI__.core.invoke('js_log', { msg: `[OfficialWeb] ${message}` });
+            }
+        } catch (error) {
+            console.log('[OfficialWeb]', message, error);
+        }
+    };
+
+    const install = () => {
+        if (document.getElementById('pd-linux-cli-probe')) {
+            return;
+        }
+        const box = document.createElement('div');
+        box.id = 'pd-linux-cli-probe';
+        box.style.cssText = [
+            'position:fixed', 'right:16px', 'bottom:16px', 'z-index:2147483647',
+            'background:#1b1b1f', 'color:#f5f5f7', 'padding:10px 12px',
+            'border-radius:10px', 'font:12px/1.4 system-ui,sans-serif',
+            'box-shadow:0 8px 30px rgba(0,0,0,.45)', 'max-width:360px'
+        ].join(';');
+        const title = document.createElement('div');
+        title.textContent = 'Linux Sync · CLI probe';
+        title.style.cssText = 'font-weight:700;margin-bottom:6px';
+        const result = document.createElement('div');
+        result.textContent = 'Checking official Proton Drive CLI…';
+        result.style.cssText = 'color:#bbb;overflow-wrap:anywhere';
+        box.appendChild(title);
+        box.appendChild(result);
+        document.body.appendChild(box);
+
+        const probe = async () => {
+            try {
+                if (!window.__TAURI__ || !window.__TAURI__.core) {
+                    throw new Error('Tauri IPC is unavailable on this page');
+                }
+                const value = await window.__TAURI__.core.invoke('cli_probe');
+                result.textContent = `${value.version}\n${value.path}`;
+                result.style.whiteSpace = 'pre-wrap';
+                log(`CLI probe ok: ${value.version}`);
+            } catch (error) {
+                result.textContent = `CLI probe failed: ${error}`;
+                log(`CLI probe failed: ${error}`);
+            }
+        };
+
+        setTimeout(probe, 2500);
+        setInterval(probe, 30000);
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', install, { once: true });
+    } else {
+        install();
+    }
+})();
+"#;
+
 // Shared HTTP client with cookie jar
 pub(crate) struct AppState {
     client: Client,
@@ -43,9 +104,79 @@ struct ProxyResponse {
     body: String,
 }
 
+#[derive(Debug, Serialize)]
+struct CliProbe {
+    path: String,
+    version: String,
+}
+
 #[tauri::command]
 fn js_log(msg: String) {
     println!("[JS] {}", msg);
+}
+
+#[tauri::command]
+fn cli_probe(window: tauri::WebviewWindow) -> Result<CliProbe, String> {
+    ensure_official_command_allowed(&window)?;
+    let path = find_cli_binary().ok_or("Proton Drive CLI not found")?;
+    let output = std::process::Command::new(&path)
+        .arg("--version")
+        .output()
+        .map_err(|e| format!("run Proton Drive CLI: {e}"))?;
+    let version = String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .chain(String::from_utf8_lossy(&output.stderr).lines())
+        .next()
+        .unwrap_or("")
+        .trim()
+        .to_string();
+    Ok(CliProbe {
+        path: path.to_string_lossy().to_string(),
+        version,
+    })
+}
+
+fn find_cli_binary() -> Option<PathBuf> {
+    if let Ok(value) = std::env::var("PROTON_DRIVE_BIN") {
+        let path = PathBuf::from(value);
+        if path.is_file() {
+            return Some(path);
+        }
+    }
+    if let Ok(dir) = std::env::var("APPDIR") {
+        let path = PathBuf::from(dir).join("usr/bin/proton-drive");
+        if path.is_file() {
+            return Some(path);
+        }
+    }
+    if let Some(home) = dirs::home_dir() {
+        let path = home.join(".local/bin/proton-drive");
+        if path.is_file() {
+            return Some(path);
+        }
+    }
+    if let Ok(paths) = std::env::var("PATH") {
+        for dir in std::env::split_paths(&paths) {
+            let path = dir.join("proton-drive");
+            if path.is_file() {
+                return Some(path);
+            }
+        }
+    }
+    None
+}
+
+fn ensure_official_command_allowed(window: &tauri::WebviewWindow) -> Result<(), String> {
+    let current_url = window.url().map_err(|e| format!("read window URL: {e}"))?;
+    let host = current_url.host_str().unwrap_or_default();
+    let local = current_url.scheme() == "tauri"
+        && (host == "localhost" || host == "tauri.localhost");
+    let proton = current_url.scheme() == "https"
+        && (host == "proton.me" || host.ends_with(".proton.me"));
+    if !local && !proton {
+        return Err(ERR_SYNC_NOT_ALLOWED.to_string());
+    }
+    Ok(())
 }
 
 // Store the return URL when navigating to captcha
@@ -956,12 +1087,31 @@ fn main() {
 })();
 "#;
 
+            let official_web = std::env::var("PROTON_DRIVE_OFFICIAL_WEB")
+                .map(|value| value == "1" || value.eq_ignore_ascii_case("true"))
+                .unwrap_or(false);
+            let official_web_nav = official_web;
+            let initial_url = if official_web {
+                WebviewUrl::External(
+                    "https://drive.proton.me/"
+                        .parse()
+                        .expect("valid Proton Drive URL"),
+                )
+            } else {
+                WebviewUrl::App("index.html".into())
+            };
+            let app_init_script = if official_web {
+                OFFICIAL_INIT_SCRIPT.to_string()
+            } else {
+                init_script.clone()
+            };
+
             let app_handle_nav = app.handle().clone();
-            let _window = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
+            let _window = WebviewWindowBuilder::new(app, "main", initial_url)
                 .title("Proton Drive for Linux (Unofficial)")
                 .inner_size(1200.0, 800.0)
                 .min_inner_size(800.0, 600.0)
-                .initialization_script(init_script)
+                .initialization_script(app_init_script)
                 .devtools(true)  // Enable right-click -> Inspect
                 .on_download(|_webview, event| {
                     use tauri::webview::DownloadEvent;
@@ -990,6 +1140,17 @@ fn main() {
                 .on_navigation(move |url| {
                     let url_str = url.as_str();
                     println!("[Navigation] {}", url_str);
+
+                    if official_web_nav {
+                        let host = url.host_str().unwrap_or_default();
+                        let allowed = matches!(url.scheme(), "blob" | "data" | "about")
+                            || (url.scheme() == "https"
+                                && (host == "proton.me" || host.ends_with(".proton.me")));
+                        if !allowed {
+                            println!("[Navigation] Blocking non-Proton navigation: {}", url_str);
+                        }
+                        return allowed;
+                    }
 
                     // Intercept blob: URLs for downloads
                     if url.scheme() == "blob" {
@@ -1164,6 +1325,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             proxy_request,
             js_log,
+            cli_probe,
             navigate_to_captcha,
             get_captcha_return_url,
             store_verification_token,

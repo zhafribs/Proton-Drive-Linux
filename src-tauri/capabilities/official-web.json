@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "identifier": "official-web",
+  "description": "Minimal IPC access for the official Proton Drive web app.",
+  "windows": [
+    "main"
+  ],
+  "remote": {
+    "urls": [
+      "https://drive.proton.me/*",
+      "https://account.proton.me/*",
+      "https://account-api.proton.me/*",
+      "https://verify.proton.me/*",
+      "https://verify-api.proton.me/*",
+      "https://*.proton.me/*",
+      "https://proton.me/*"
+    ]
+  },
+  "permissions": [
+    "core:default",
+    "allow-cli-probe"
+  ]
+}
