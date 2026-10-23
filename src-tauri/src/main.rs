@@ -12,6 +12,7 @@ use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 
 mod live_sync;
 mod sync_db;
+mod sync_fs;
 mod sync_types;
 
 const PROTON_API_BASE: &str = "https://mail.proton.me";
