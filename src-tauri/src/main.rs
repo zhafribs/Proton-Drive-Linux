@@ -135,6 +135,9 @@ const OFFICIAL_INIT_SCRIPT: &str = r#"
                 if (health.ts) {
                     bits.push(`updated: ${health.ts}`);
                 }
+                if (result.logPath) {
+                    bits.push(`log: ${result.logPath}`);
+                }
                 setStatus(bits.join('\n'));
             } catch (error) {
                 setStatus(`Status unavailable: ${error}`);
