@@ -103,6 +103,8 @@ No AGPL code from the new app will be copied into the MIT app. MIT code from the
 2. User signs in through Proton's normal login, including CAPTCHA and 2FA.
 3. A one-time dialog explains:
    - this is an unofficial third-party client
+   - Proton may temporarily limit an account after a login from an unofficial
+     client; do not use a primary account for beta testing
    - credentials are entered into Proton's web login, not stored by this app
    - sync runs while the app is running
 4. User chooses a local folder (default `~/ProtonDrive`).
@@ -574,13 +576,21 @@ Integration:
 
 ### Manual acceptance matrix
 
-There is no separate test account. Tests will use an isolated test device and folder on the user's account:
+A separate Proton test account is strongly recommended. Proton's anti-abuse
+system can temporarily limit an account after a login from an unofficial
+client, and this has already been reported upstream. Do not use the primary
+Proton account for login or sync testing.
+
+If a separate test account is available, use an isolated device and folder:
 
 - remote device: `ProtonDrive-Test-<date>` under **Computers**
 - local folder: `/tmp/protondrive-test` or `~/ProtonDrive-Test`
 - only disposable test files; no real documents
 - any remote test deletions go to Proton trash and are cleaned up afterward
 - the test device can be removed from **Computers** after the run
+
+If no separate test account is available, real login and sync acceptance waits.
+Local Rust/planner tests continue without a Proton account.
 
 The app must never be pointed at the user's real Documents, Downloads, or home directory during testing.
 
@@ -689,7 +699,7 @@ Dates are not promised in this document. The first working local→remote AppIma
 8. **First release:** AppImage only, Linux x86_64, beta `0.1.0`.
 9. **Branding:** unofficial name, generic icon, no Proton logo, credential disclosure.
 10. **Calendar:** excluded from beta; hide/remove the calendar drawer entry.
-11. **Testing:** no separate Proton account; use an isolated test device and disposable local folder.
+11. **Testing:** use a separate Proton test account if possible; never use the primary account for login/sync testing. If unavailable, defer real-account testing and use local/planner tests.
 12. **Rename/move:** beta syncs them as delete + recreate; optimization is post-beta.
 13. **Implementation gate:** a short Phase 0 spike must verify Drive SDK streaming, device creation, and event subscription inside the bundled app before M1.
 

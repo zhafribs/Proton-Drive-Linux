@@ -101,7 +101,7 @@ The final app has **no CLI dependency**, **no Calendar build**, and **no permane
    - `sync_begin_download` / `sync_write_download_chunk` / `sync_finish_download`
    This is the real transfer interface; do not build a second one later.
 3. Upload and download a 1 GiB test file through the chunk bridge. Record peak RSS (`/proc/<pid>/status`) and confirm it stays below roughly 300 MiB.
-4. Test with an isolated device named `ProtonDrive-Spike-<date>` and a disposable local folder. Do not use real files.
+4. Test with a **separate Proton test account** if available, using an isolated device named `ProtonDrive-Spike-<date>` and a disposable local folder. Do not use the primary account or real files. If only the primary account exists, do not run this login spike; continue with local/planner tests and wait for a test account.
 5. Record results in `docs/spikes/2026-10-24-drive-sdk.md`:
    - exact SDK method names used
    - event latency
@@ -634,7 +634,9 @@ export function conflictName(path: string, now: Date): string;
 ## Execution notes
 
 - Work on a dedicated branch or worktree, not the user's home directory.
+- Use a separate Proton test account. Never use the primary account for login or sync testing.
 - Use an isolated test device `ProtonDrive-Test-<date>` and `/tmp/protondrive-test`; no real files.
+- If Proton limits an account, stop retrying and follow `docs/ACCOUNT-SAFETY.md`.
 - Do not point the sync root at `$HOME`, `~/Documents`, `~/Downloads`, or the existing `~/ProtonDrive` without explicit permission.
 - Every remote delete must be `trashNodes`, never `deleteNodes`.
 - Every local delete must go to trash.

@@ -8,6 +8,16 @@ project remains separate and unchanged.
 > **Unofficial.** This project is not affiliated with Proton AG. Proton Drive
 > is a trademark of Proton AG.
 
+> **Account safety:** Proton's security system may temporarily limit an account
+> that signs in through an unofficial client. Do not use your primary Proton
+> account for beta testing. Use a separate test account, and stop retrying if
+> Proton limits access. See [Account safety](docs/ACCOUNT-SAFETY.md).
+
+> **Upstream downloads:** the upstream project's GitHub release links are
+> currently broken (404) because its `v1.4.4` Git tag is missing. This is
+> tracked in upstream issue #124 and is unrelated to the Proton account
+> limitation. This repo does not depend on those downloads.
+
 ## What it is
 
 This app wraps Proton's own Drive web application in a Tauri/WebKitGTK window.
