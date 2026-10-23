@@ -450,6 +450,7 @@ export function conflictName(path: string, now: Date): string;
 | both changed | `download_conflict` + `upload_revision` |
 | local deleted, remote unchanged | `trash_remote` |
 | local deleted, remote changed | `download_new` |
+| remote deleted, local unchanged | `trash_local` |
 | remote deleted, local changed | `upload_new` |
 | both deleted | `remove_state` |
 | delete disabled | no `trash_*` action; `hold` |

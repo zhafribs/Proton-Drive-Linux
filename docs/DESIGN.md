@@ -367,7 +367,7 @@ A side has changed if its current fingerprint differs from the stored fingerprin
 | exists | exists | none | if same size/mtime within tolerance: link; else keep both (remote conflict copy, local canonical) |
 | exists | exists | synced | if both unchanged: no-op; local only: upload revision; remote only: download; both: conflict |
 | exists | missing | none | upload new |
-| exists | missing | synced | local deleted remotely: if local unchanged, upload new (remote delete vs local edit = keep local); if local changed, upload new |
+| exists | missing | synced | remote deleted: if local unchanged, trash local (propagate the deletion); if local changed, upload new (keep the edit) |
 | missing | exists | none | download new |
 | missing | exists | synced | local deleted: if remote unchanged, trash remote; if remote changed, download remote (remote edit wins over local delete) |
 | missing | missing | synced | remove state |
