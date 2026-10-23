@@ -40,15 +40,31 @@ Upstream references:
 - https://github.com/DonnieDice/protondrive-linux/pull/126 — release recovery
   path
 
-Our new `zhafribs/Proton-Drive-Linux` repo has no releases yet because the app
-is still at Task 0.
+Our new `zhafribs/Proton-Drive-Linux` repo has no releases yet. Development is
+on the `feat/sync-core` branch; live login/sync acceptance is deliberately
+paused until there is a safe test account.
 
 ## Why Proton may have limited the account
 
 Proton's risk system sees a login from an unofficial client that wraps the web
 app in a custom Tauri/WebKitGTK shell and proxies API traffic. That can look
-different from a normal browser. There are already public reports of this with
-the upstream app:
+different from a normal browser.
+
+There is a concrete difference in this app's auth path: the webview origin is
+`tauri://localhost`, and the Rust proxy forwards API requests to
+`https://mail.proton.me`. The official Drive web app is served from
+`drive.proton.me` and the Account app from `account.proton.me`. The proxy also
+forwards the webview's `Origin`/`Referer` headers. That combination is a
+plausible trigger for Proton's risk engine, although Proton does not publish
+the exact rule. The app also has CAPTCHA auto-submit logic; repeated or
+automated-looking auth attempts can make the situation worse.
+
+This is not proof that the auth code caused the limitation. The same account
+working through the official CLI on another laptop means the account is not
+globally disabled. It could be this client, this device, this network, or a
+combination. The generic Proton message does not distinguish those cases.
+
+There are already public reports of this with the upstream app:
 
 - https://github.com/DonnieDice/protondrive-linux/issues/43
   "Trying to login - Proton locked my account"
@@ -61,15 +77,21 @@ attempts can make a temporary limitation worse.
 ## What to do now
 
 1. **Stop trying to log in through the new app.**
-2. Open Proton in a normal browser: https://account.proton.me or
-   https://mail.proton.me.
-3. If access is limited, use the appeal link Proton gave you:
+2. On the same PC, open the official web app in a normal browser:
+   https://drive.proton.me or https://account.proton.me.
+   - If the official web app works, the account is fine and this client's
+     auth path is the likely trigger.
+   - If the official web app gives the same limitation, the restriction is
+     attached to the account/session/network/device, not just this app.
+3. If you use a VPN, proxy, or Tor on this PC, disable it and try the official
+   web app again. Proton explicitly says these can trigger temporary limits.
+4. If access is limited, use the appeal link Proton gave you:
    https://proton.me/support/appeal-abuse
-4. Follow Proton support's instructions. You may need to change the password,
+5. Follow Proton support's instructions. You may need to change the password,
    use recovery codes, or confirm the account with 2FA.
-5. Do not create another account to get around a limitation.
-6. Keep your local files. Nothing in this project deletes the sync folder.
-7. Wait for Proton to restore access before testing again.
+6. Do not create another account to get around a limitation.
+7. Keep your local files. Nothing in this project deletes the sync folder.
+8. Wait for Proton to restore access before testing again.
 
 If you contact support, be factual: say you attempted to sign in with an
 unofficial Linux desktop client and have stopped retrying.
