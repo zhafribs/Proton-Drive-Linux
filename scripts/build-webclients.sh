@@ -30,6 +30,10 @@ calc_cache_key() {
         for path in \
             "$REPO_ROOT/scripts/fix_deps.py" \
             "$REPO_ROOT/scripts/create_stubs.py" \
+            "$REPO_ROOT/scripts/patch_drive_linux_sync_bridge.py" \
+            "$REPO_ROOT/scripts/assets/ProtonDriveLinuxSyncBridge.tsx" \
+            "$REPO_ROOT/scripts/assets/DriveLinuxPanel.tsx" \
+            "$REPO_ROOT/scripts/assets/sync-planner.ts" \
             "$REPO_ROOT/patches/common/fix-tauri-worker-protocol.patch" \
             "$WEBCLIENTS_DIR/package.json" \
             "$WEBCLIENTS_DIR/yarn.lock" \
@@ -105,6 +109,12 @@ if [ -d "$PATCHES_DIR" ]; then
         fi
     done
 fi
+
+# 2b. Install the Linux sync bridge and planner into the Drive app.
+echo "🔗 Installing Linux sync bridge..."
+cd "$REPO_ROOT"
+python3 scripts/patch_drive_linux_sync_bridge.py
+cd WebClients
 
 # 3. Install dependencies in WebClients
 echo "📦 Installing WebClients dependencies..."

@@ -90,3 +90,7 @@ scripts/build-snap.sh
 
 # Installer (not needed for CI builds)
 install.js
+
+# Python bytecode
+__pycache__/
+*.pyc

@@ -27,6 +27,12 @@ base64 = "0.22"
 dirs = "5.0"
 mime_guess = "2.0"
 notify = "6.1"
+rusqlite = "0.32"
+trash = "5"
+filetime = "0.2"
+
+[dev-dependencies]
+tempfile = "3"
 
 [features]
 default = ["custom-protocol"]

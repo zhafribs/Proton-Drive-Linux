@@ -107,7 +107,7 @@ No AGPL code from the new app will be copied into the MIT app. MIT code from the
      client; do not use a primary account for beta testing
    - credentials are entered into Proton's web login, not stored by this app
    - sync runs while the app is running
-4. User chooses a local folder (default `~/ProtonDrive`).
+4. User chooses a local folder (default `~/ProtonDrive-Linux`, kept separate from the old CLI app's `~/ProtonDrive`).
 5. Sync starts. A Linux device is created or reused under Proton Drive's **Computers** section.
 
 ### Normal use
@@ -367,7 +367,7 @@ A side has changed if its current fingerprint differs from the stored fingerprin
 | exists | exists | none | if same size/mtime within tolerance: link; else keep both (remote conflict copy, local canonical) |
 | exists | exists | synced | if both unchanged: no-op; local only: upload revision; remote only: download; both: conflict |
 | exists | missing | none | upload new |
-| exists | missing | synced | local deleted remotely: if local unchanged, upload new (remote delete vs local edit = keep local); if local changed, upload new |
+| exists | missing | synced | remote deleted: if local unchanged, trash local (propagate the deletion); if local changed, upload new (keep the edit) |
 | missing | exists | none | download new |
 | missing | exists | synced | local deleted: if remote unchanged, trash remote; if remote changed, download remote (remote edit wins over local delete) |
 | missing | missing | synced | remove state |
