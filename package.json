@@ -25,9 +25,12 @@
     "prebuild": "node -e \"const v=process.versions.node.split('.').map(Number); if(v[0]<20){console.error('Node.js 20+ required, got '+process.version); process.exit(1)}\"",
     "build": "npm run build:appimage",
     "build:web": "./scripts/build-webclients.sh",
-    "build:appimage": "npm run build:web && tauri build --bundles appimage"
+    "build:appimage": "npm run build:web && tauri build --bundles appimage",
+    "test:planner": "vitest run tests/js",
+    "test": "npm run test:planner"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.11.2"
+    "@tauri-apps/cli": "^2.11.2",
+    "vitest": "^5.0.5"
   }
 }
