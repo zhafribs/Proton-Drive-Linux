@@ -245,6 +245,9 @@ pub fn engine_start(
         .env("PROTON_SYNC_INOTIFY", "1")
         .env("PROTON_SYNC_PUSH", "0")
         .env("PROTON_SYNC_WORKERS", "6")
+        .env_remove("PYTHONHOME")
+        .env_remove("PYTHONPATH")
+        .env_remove("PYTHONEXECUTABLE")
         .stdin(Stdio::null())
         .stdout(Stdio::from(log))
         .stderr(Stdio::from(err));
