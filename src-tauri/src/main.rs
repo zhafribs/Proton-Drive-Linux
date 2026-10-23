@@ -1176,6 +1176,7 @@ fn main() {
             get_sync_status,
             handle_remote_update,
             sync_commands::sync_get_root,
+            sync_commands::sync_default_root,
             sync_commands::sync_set_root,
             sync_commands::sync_start,
             sync_commands::sync_stop,
@@ -1191,7 +1192,9 @@ fn main() {
             sync_commands::sync_write_download_chunk,
             sync_commands::sync_finish_download,
             sync_commands::sync_abort_download,
+            sync_commands::sync_mkdir_local,
             sync_commands::sync_trash_local,
+            sync_commands::sync_mark_suppressed,
             sync_commands::sync_get_device_name
         ])
         .run(tauri::generate_context!())

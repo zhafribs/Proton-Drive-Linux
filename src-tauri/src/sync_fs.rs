@@ -223,6 +223,19 @@ fn move_to_fallback_trash(
     }
 }
 
+pub fn create_local_dir(root: &Path, relative: &str) -> Result<(), String> {
+    let relative = validate_relative_path(relative)?;
+    let target = root.join(relative);
+    validate_path_within_root(root, &target)?;
+    if target.exists() {
+        if target.is_dir() {
+            return Ok(());
+        }
+        return Err("A file already exists at the directory path".to_string());
+    }
+    fs::create_dir_all(&target).map_err(|e| format!("create local directory: {e}"))
+}
+
 pub fn set_mtime_ms(path: &Path, mtime_ms: i64) -> Result<(), String> {
     let seconds = mtime_ms.div_euclid(1000);
     let nanos = (mtime_ms.rem_euclid(1000) * 1_000_000) as u32;
@@ -336,6 +349,15 @@ mod tests {
         let trashed: Vec<_> = walk_files(&fallback);
         assert_eq!(trashed.len(), 1);
         assert_eq!(fs::read(&trashed[0]).unwrap(), b"data");
+    }
+
+    #[test]
+    fn creates_local_directories_safely() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+        create_local_dir(root, "a/b").unwrap();
+        assert!(root.join("a/b").is_dir());
+        assert!(create_local_dir(root, "../escape").is_err());
     }
 
     #[test]

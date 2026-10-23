@@ -30,6 +30,7 @@ pub struct SyncState {
     transfers: TransferManager,
     active_root: Mutex<Option<RootRecord>>,
     fallback_trash_root: PathBuf,
+    selected_root_path: PathBuf,
 }
 
 impl SyncState {
@@ -40,13 +41,35 @@ impl SyncState {
         let fallback_trash_root = app_data_dir.join("trash");
         fs::create_dir_all(&fallback_trash_root)
             .map_err(|e| format!("create fallback trash directory: {e}"))?;
+        let selected_root_path = app_data_dir.join("selected-root.txt");
+        let active_root = fs::read_to_string(&selected_root_path)
+            .ok()
+            .map(|value| value.trim().to_string())
+            .filter(|value| !value.is_empty())
+            .and_then(|value| db.get_root(&value).ok().flatten());
         Ok(Self {
             db: Mutex::new(Some(db)),
             watcher: Mutex::new(None),
             transfers: TransferManager::default(),
-            active_root: Mutex::new(None),
+            active_root: Mutex::new(active_root),
             fallback_trash_root,
+            selected_root_path,
         })
+    }
+
+    fn persist_root(&self, root: &RootRecord) -> Result<(), String> {
+        fs::write(&self.selected_root_path, root.local_path.as_bytes())
+            .map_err(|e| format!("persist selected sync root: {e}"))?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(
+                &self.selected_root_path,
+                fs::Permissions::from_mode(0o600),
+            )
+            .map_err(|e| format!("set selected sync root permissions: {e}"))?;
+        }
+        Ok(())
     }
 
     fn require_root(&self) -> Result<RootRecord, String> {
@@ -107,6 +130,13 @@ pub fn sync_get_root(
 }
 
 #[tauri::command]
+pub fn sync_default_root(window: tauri::WebviewWindow) -> Result<String, String> {
+    require_allowed(&window)?;
+    let home = dirs::home_dir().ok_or("Unable to locate home directory")?;
+    Ok(home.join("ProtonDrive").to_string_lossy().to_string())
+}
+
+#[tauri::command]
 pub fn sync_set_root(
     window: tauri::WebviewWindow,
     state: State<'_, Arc<AppState>>,
@@ -114,6 +144,15 @@ pub fn sync_set_root(
     device_name: String,
 ) -> Result<RootRecord, String> {
     require_allowed(&window)?;
+    let requested = PathBuf::from(&path);
+    let home = dirs::home_dir().ok_or("Unable to locate home directory")?;
+    if !requested.starts_with(&home) {
+        return Err("Sync folder must be inside your home directory".to_string());
+    }
+    if !requested.exists() {
+        fs::create_dir_all(&requested)
+            .map_err(|e| format!("create sync folder: {e}"))?;
+    }
     let root_path = crate::validate_sync_root_path(&path)?;
     let local_path = root_path.to_string_lossy().to_string();
     let now = now_unix_ns();
@@ -140,6 +179,7 @@ pub fn sync_set_root(
     };
     db.upsert_root(&root)?;
     drop(db_guard);
+    state.sync.persist_root(&root)?;
 
     *state
         .sync
@@ -344,6 +384,17 @@ pub fn sync_abort_download(
 }
 
 #[tauri::command]
+pub fn sync_mkdir_local(
+    window: tauri::WebviewWindow,
+    state: State<'_, Arc<AppState>>,
+    relative_path: String,
+) -> Result<(), String> {
+    require_allowed(&window)?;
+    let root = state.sync.require_root()?;
+    crate::sync_fs::create_local_dir(&PathBuf::from(root.local_path), &relative_path)
+}
+
+#[tauri::command]
 pub fn sync_trash_local(
     window: tauri::WebviewWindow,
     state: State<'_, Arc<AppState>>,
@@ -356,6 +407,26 @@ pub fn sync_trash_local(
         &relative_path,
         &state.sync.fallback_trash_root,
     )
+}
+
+#[tauri::command]
+pub fn sync_mark_suppressed(
+    window: tauri::WebviewWindow,
+    state: State<'_, Arc<AppState>>,
+    relative_path: String,
+) -> Result<(), String> {
+    require_allowed(&window)?;
+    validate_relative_path(&relative_path)?;
+    if let Some(watcher) = state
+        .sync
+        .watcher
+        .lock()
+        .map_err(|e| e.to_string())?
+        .as_ref()
+    {
+        watcher.suppress(&relative_path);
+    }
+    Ok(())
 }
 
 #[tauri::command]

@@ -259,7 +259,10 @@ impl TransferManager {
         file.sync_all()
             .map_err(|e| format!("sync downloaded file: {e}"))?;
         drop(file);
-        validate_path_within_root(&root, &target)?;
+        if let Err(error) = validate_path_within_root(&root, &target) {
+            let _ = fs::remove_file(&temp);
+            return Err(error);
+        }
         fs::rename(&temp, &target).map_err(|e| {
             let _ = fs::remove_file(&temp);
             format!("finish downloaded file: {e}")
