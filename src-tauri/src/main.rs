@@ -15,6 +15,7 @@ mod sync_db;
 mod sync_fs;
 mod sync_transfer;
 mod sync_types;
+mod sync_watcher;
 
 const PROTON_API_BASE: &str = "https://mail.proton.me";
 const ERR_SYNC_NOT_ALLOWED: &str = "Sync operation is not allowed in this context";
