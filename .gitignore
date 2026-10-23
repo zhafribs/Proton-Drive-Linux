@@ -43,18 +43,11 @@ artifacts/
 downloads/
 
 # Local packaging work directories
-/.flatpak-builder/
 /AppDir/
 /build-dir/
-/flatpak-staging/
 /repo/
-/snap/
 /squashfs-root/
-/.snap-build.*/
 /appimagetool
-/com.proton.drive.desktop
-/com.proton.drive.yml
-/proton-drive-wrapper.sh
 /protondrive-linux-repo
 
 # Environment

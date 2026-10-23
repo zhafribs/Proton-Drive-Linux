@@ -1,20 +1,20 @@
 {
-  "name": "protondrive-linux",
-  "version": "1.4.4",
-  "description": "Proton Drive desktop client for Linux",
+  "name": "proton-drive-linux",
+  "version": "0.1.0",
+  "description": "Proton Drive for Linux (Unofficial) — web-based edition",
   "repository": {
     "type": "git",
-    "url": "https://github.com/DonnieDice/protondrive-linux.git"
+    "url": "https://github.com/zhafribs/Proton-Drive-Linux.git"
   },
   "keywords": [
     "proton",
     "drive",
     "desktop",
     "tauri",
-    "encryption"
+    "sync"
   ],
-  "author": "DonnieDice",
-  "license": "AGPL-3.0",
+  "author": "zhafrisbs and contributors",
+  "license": "AGPL-3.0-or-later",
   "private": true,
   "engines": {
     "node": ">=20.0.0"
@@ -23,10 +23,8 @@
     "tauri": "tauri",
     "dev": "tauri dev",
     "prebuild": "node -e \"const v=process.versions.node.split('.').map(Number); if(v[0]<20){console.error('Node.js 20+ required, got '+process.version); process.exit(1)}\"",
-    "build": "npm run build:web && tauri build --bundles deb,rpm,appimage",
+    "build": "npm run build:appimage",
     "build:web": "./scripts/build-webclients.sh",
-    "build:deb": "npm run build:web && tauri build --bundles deb",
-    "build:rpm": "npm run build:web && tauri build --bundles rpm",
     "build:appimage": "npm run build:web && tauri build --bundles appimage"
   },
   "devDependencies": {

@@ -945,7 +945,7 @@ fn main() {
 
             let app_handle_nav = app.handle().clone();
             let _window = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
-                .title("Proton Drive")
+                .title("Proton Drive for Linux (Unofficial)")
                 .inner_size(1200.0, 800.0)
                 .min_inner_size(800.0, 600.0)
                 .initialization_script(init_script)

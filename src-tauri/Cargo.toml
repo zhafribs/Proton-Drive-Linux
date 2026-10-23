@@ -1,14 +1,14 @@
 [package]
-name = "proton-drive"
-version = "1.4.4"
-description = "Proton Drive desktop client"
-authors = ["DonnieDice"]
-license = "AGPL-3.0"
+name = "proton-drive-linux"
+version = "0.1.0"
+description = "Proton Drive for Linux (Unofficial) - web-based edition"
+authors = ["zhafrisbs and contributors", "DonnieDice"]
+license = "AGPL-3.0-or-later"
 edition = "2021"
 
 # Specify binary name explicitly to match everywhere
 [[bin]]
-name = "proton-drive"
+name = "proton-drive-linux"
 path = "src/main.rs"
 
 [build-dependencies]

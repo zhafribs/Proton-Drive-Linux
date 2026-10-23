@@ -1,70 +1,78 @@
-<div>
-<h1><img src="src-tauri/icons/proton-drive.svg" height="28"> ProtonDrive Linux</h1>
-</div>
+# Proton Drive for Linux (Unofficial) — Web Edition
 
-[![latest](https://img.shields.io/github/v/release/DonnieDice/protondrive-linux?label=latest&color=6d4aff)](https://github.com/DonnieDice/protondrive-linux/releases/latest)
-[![downloads](https://img.shields.io/github/downloads/DonnieDice/protondrive-linux/total?color=6d4aff)](https://github.com/DonnieDice/protondrive-linux/releases)
-[![license](https://img.shields.io/badge/license-AGPL--3.0-6d4aff)](docs/LICENSE)
-[![issues](https://img.shields.io/github/issues/DonnieDice/protondrive-linux?color=6d4aff)](https://github.com/DonnieDice/protondrive-linux/issues)
+A fast, web-based Proton Drive desktop client for Linux with two-way folder
+sync. This is the **no-CLI** edition. The existing
+[Proton-Drive-Linux-CLI](https://github.com/zhafribs/Proton-Drive-Linux-Cli)
+project remains separate and unchanged.
 
-An unofficial desktop client for [Proton Drive](https://proton.me/drive) on Linux.
+> **Unofficial.** This project is not affiliated with Proton AG. Proton Drive
+> is a trademark of Proton AG.
 
----
+## What it is
 
-## About
+This app wraps Proton's own Drive web application in a Tauri/WebKitGTK window.
+Login, CAPTCHA, 2FA, browsing, previews, and Proton's cryptography are handled
+by the bundled web app. The native layer adds:
 
-ProtonDrive Linux wraps the official [Proton Drive](https://proton.me/drive) web interface in a native Linux desktop window using [Tauri](https://tauri.app/) and [WebKitGTK](https://webkitgtk.org/). Authentication, encryption, and file operations are handled by Proton's web app - this project provides the native shell, system tray integration, and cross-distro packaging.
+- one local folder synced to one Linux device under Proton Drive **Computers**
+- two-way create/modify/delete sync
+- trash-based deletes (never permanent)
+- conflict copies that keep both versions
+- streamed large-file transfers
+- a native Linux Sync panel and tray controls
 
-**Features:**
+The app does **not** call the official `proton-drive` CLI and does not use the
+CLI project's sync engine.
 
-- Desktop window for Proton Drive with system tray integration
-- Login, CAPTCHA, and two-factor authentication support
-- Proton Drive file browsing and downloads (saved to `~/Downloads`)
-- Experimental 2-way live sync (watch a local folder and apply remote changes)
-- Native packages for most major Linux distributions
-- Built with Rust + Tauri for a small footprint and low resource usage
+## Status
 
-> **Packages are not yet available on Flathub, Snap Store, or system repositories.** For now, download from [Releases](https://github.com/DonnieDice/protondrive-linux/releases/latest).
+Beta `0.1.0`. AppImage only, Linux x86_64.
 
-## 2-Way Live Sync (Experimental)
+Expected beta limitations:
 
-The native sync layer lets the Proton Drive web app watch a local folder and apply remote file changes into it. This is **experimental** - the web frontend must call the Tauri commands to use it.
+- sync runs while the app is running or in the tray; it does not run headless
+- rename/move is synced as delete + recreate; the old version stays in trash
+- calendar is not included
+- Proton WebClients are pinned and must be rebuilt for web-app updates
 
-### How it works
+## Requirements
 
-1. **Choose a sync folder** - the web app calls `start_sync(path)` with any directory under `$HOME`. The path must exist and be a directory. Paths outside `$HOME` are rejected for safety.
-2. **Local changes are detected** - a recursive file watcher monitors the folder for creates, modifies, and deletes. Events are emitted as `live-sync://local-change` to the frontend.
-3. **Remote changes are applied** - the frontend calls `handle_remote_update(change)` to write or delete files in the sync folder. Relative paths are validated against the sync root - symlink traversal and path traversal (`../`) are blocked.
+- Linux x86_64
+- WebKitGTK 4.1
+- GTK 3
+- GStreamer base/good plugins
+- a desktop with tray support (for background sync)
 
-### Tauri commands
+## Build
 
-| Command | Description |
-|---------|-------------|
-| `start_sync(path)` | Start watching a folder. `path` must be an existing directory under `$HOME`. |
-| `stop_sync()` | Stop watching and release the file watcher. |
-| `get_sync_status()` | Returns `{ enabled, folder_path }`. |
-| `handle_remote_update(change)` | Apply a remote change. `change` is `{ relativePath, action, contentBase64 }` where `action` is `"create"`, `"update"`, or `"delete"`. |
+```bash
+npm ci
+npm run build:appimage
+```
 
-### Constraints
+The resulting AppImage is under `src-tauri/target/release/bundle/appimage/`.
 
-- The sync folder **must** be under `$HOME` (validated on start).
-- Symlinks anywhere in the target path are rejected.
-- Path components like `..` or root-dir references in `relativePath` are rejected.
-- A suppression cache (4096 entries, 30 s TTL) prevents watcher ping-pong when remote writes land.
-- Commands are only accepted from `tauri://localhost` or `tauri://tauri.localhost`.
+The build fetches the pinned Proton WebClients checkout, applies the local
+patches, builds Drive + Account + Verify, and then packages the Tauri app.
+Calendar is intentionally excluded.
+
+## License and attribution
+
+AGPL-3.0-or-later. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+
+This project is derived from
+[DonnieDice/protondrive-linux](https://github.com/DonnieDice/protondrive-linux)
+at commit `0b5dd592de297faddb865872907d045d47ee24e4`. Upstream copyright and
+history are preserved.
+
+It bundles Proton WebClients, which are licensed under AGPL-3.0. The exact
+WebClients source commit and local patches are recorded in this repository so
+the corresponding source can be rebuilt.
 
 ## Documentation
 
-| | |
-|---|---|
-| [Workflow](docs/workflow.md) | Branch, PR, review, and merge guide |
-| [Contributing](docs/CONTRIBUTING.md) | Detailed dev, build, and packaging rules |
-| [Packaging & Compatibility](docs/packaging.md) | Support matrix, compatibility gates, patch policy |
-| [License](docs/LICENSE) | AGPL-3.0 or later |
-| [Security Policy](docs/SECURITY.md) | Vulnerability reporting |
-| [Code of Conduct](docs/CODE_OF_CONDUCT.md) | Community standards |
-
-&nbsp;
-
-> **Disclaimer:** This project is not affiliated with, endorsed by, or connected to Proton AG.
-> Proton Drive is a trademark of Proton AG. This is an independent community project.
+- [Design](docs/DESIGN.md)
+- [Build](docs/BUILD.md)
+- [Security](docs/SECURITY.md)
+- [Contributing](docs/CONTRIBUTING.md)
+- [Implementation plan](docs/superpowers/plans/2026-10-24-proton-drive-linux.md)

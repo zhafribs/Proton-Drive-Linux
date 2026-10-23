@@ -1,0 +1,16 @@
+Proton Drive for Linux (Unofficial) — Web Edition
+Copyright (C) 2026 zhafrisbs and contributors
+
+This project is derived from ProtonDrive Linux by DonnieDice:
+https://github.com/DonnieDice/protondrive-linux
+Upstream base commit: 0b5dd592de297faddb865872907d045d47ee24e4 (post-v1.4.4)
+
+It bundles Proton WebClients, which are developed by Proton AG and
+distributed under the GNU Affero General Public License:
+https://github.com/ProtonMail/WebClients
+
+The combined work is licensed under the GNU Affero General Public License,
+version 3 or later. See LICENSE.
+
+Proton Drive is a trademark of Proton AG. This project is independent and
+is not affiliated with, endorsed by, or connected to Proton AG.

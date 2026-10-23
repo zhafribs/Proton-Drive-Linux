@@ -10,6 +10,15 @@ DIST_DIR="$WEBCLIENTS_DIR/applications/drive/dist"
 CACHE_DIR="$WEBCLIENTS_DIR/.codex-cache"
 CACHE_KEY_FILE="$CACHE_DIR/webclients-build.key"
 
+# Reproducible WebClients checkout. The lock file is committed; an explicit
+# environment override is still allowed for development.
+if [ -z "${WEBCLIENTS_COMMIT:-}" ] && [ -f "$REPO_ROOT/WebClients.lock" ]; then
+    # shellcheck disable=SC1091
+    . "$REPO_ROOT/WebClients.lock"
+fi
+WEBCLIENTS_COMMIT="${WEBCLIENTS_COMMIT:-bbad1a0a482227b93a2e963a232463aede9b8abf}"
+WEBCLIENTS_REF="${WEBCLIENTS_REF:-$WEBCLIENTS_COMMIT}"
+
 calc_cache_key() {
     local head="missing"
     if [ -d "$WEBCLIENTS_DIR/.git" ]; then
@@ -50,16 +59,24 @@ if [ ! -d "$WEBCLIENTS_DIR/.git" ]; then
     fi
 fi
 
-if [ ! -d "$WEBCLIENTS_DIR" ]; then
-  echo "📥 WebClients checkout missing; cloning once..."
-  WEBCLIENTS_REF="${WEBCLIENTS_REF:-main}"
-  git clone --depth=1 --single-branch --branch "$WEBCLIENTS_REF" https://github.com/ProtonMail/WebClients.git "$WEBCLIENTS_DIR"
+if [ ! -d "$WEBCLIENTS_DIR/.git" ]; then
+  echo "📥 WebClients checkout missing; cloning pinned commit $WEBCLIENTS_COMMIT..."
+  rm -rf "$WEBCLIENTS_DIR"
+  git clone --filter=blob:none --no-checkout https://github.com/ProtonMail/WebClients.git "$WEBCLIENTS_DIR"
+  git -C "$WEBCLIENTS_DIR" fetch --depth=1 origin "$WEBCLIENTS_COMMIT"
+  git -C "$WEBCLIENTS_DIR" checkout --detach "$WEBCLIENTS_COMMIT"
+else
+  echo "📌 Ensuring WebClients is at pinned commit $WEBCLIENTS_COMMIT..."
+  git -C "$WEBCLIENTS_DIR" fetch --depth=1 origin "$WEBCLIENTS_COMMIT" 2>/dev/null || true
+  git -C "$WEBCLIENTS_DIR" reset --hard HEAD >/dev/null 2>&1 || true
+  git -C "$WEBCLIENTS_DIR" checkout --detach "$WEBCLIENTS_COMMIT"
 fi
 
 if [ ! -d "$WEBCLIENTS_DIR/.git" ]; then
     echo "❌ ERROR: WebClients directory not found!"
     exit 1
 fi
+git -C "$WEBCLIENTS_DIR" rev-parse --short HEAD
 
 # 1. Patch dependencies
 echo "🔧 Patching dependencies..."

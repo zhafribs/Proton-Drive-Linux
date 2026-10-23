@@ -1,0 +1,3 @@
+# Proton WebClients revision used to build the bundled Drive UI and SDK.
+# Update only after a successful build and sync test.
+WEBCLIENTS_COMMIT=bbad1a0a482227b93a2e963a232463aede9b8abf

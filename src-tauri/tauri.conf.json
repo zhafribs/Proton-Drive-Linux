@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Proton Drive",
-  "version": "1.4.4",
-  "identifier": "com.proton.drive",
+  "productName": "Proton Drive for Linux",
+  "version": "0.1.0",
+  "identifier": "io.github.zhafrisbs.protondrive-linux",
   "build": {
     "beforeBuildCommand": "",
     "beforeDevCommand": "",
@@ -10,21 +10,22 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["deb", "rpm", "appimage"],
+    "targets": [
+      "appimage"
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
-      "icons/icon.png",
-      "icons/proton-drive.svg"
+      "icons/icon.png"
     ],
     "resources": [],
     "externalBin": [],
-    "copyright": "DonnieDice",
+    "copyright": "zhafrisbs and contributors; upstream DonnieDice",
     "category": "Utility",
-    "shortDescription": "Encrypted cloud storage",
-    "longDescription": "Proton Drive is encrypted cloud storage that protects your files with end-to-end encryption.",
-    "license": "AGPL-3.0",
+    "shortDescription": "Unofficial Proton Drive desktop client",
+    "longDescription": "Unofficial web-based Proton Drive client for Linux with two-way folder sync.",
+    "license": "AGPL-3.0-or-later",
     "linux": {
       "deb": {
         "depends": [
@@ -52,7 +53,9 @@
       "csp": null,
       "assetProtocol": {
         "enable": true,
-        "scope": ["**"]
+        "scope": [
+          "**"
+        ]
       }
     },
     "withGlobalTauri": true,

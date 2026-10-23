@@ -24,7 +24,7 @@ protondrive-linux/
 Clone the repository:
 
 ```bash
-git clone https://github.com/DonnieDice/protondrive-linux.git
+git clone https://github.com/zhafribs/Proton-Drive-Linux.git
 cd protondrive-linux
 ```
 
